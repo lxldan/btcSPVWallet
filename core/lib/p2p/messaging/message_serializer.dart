@@ -2,6 +2,8 @@ import 'package:core/p2p/messaging/message.dart';
 import 'package:core/p2p/messaging/messages/addr_message.dart';
 import 'package:core/p2p/messaging/message_command.dart';
 import 'package:core/p2p/messaging/messages/headers_message.dart';
+import 'package:core/p2p/messaging/messages/ping_message.dart';
+import 'package:core/p2p/messaging/messages/verack_message.dart';
 import 'package:core/p2p/messaging/messages/version_message.dart';
 import 'package:collection/collection.dart';
 import 'package:crypto/crypto.dart';
@@ -187,7 +189,10 @@ class MessageSerializer {
   }
 
   /// Creates a message instance based on the command type.
-  static Message? _generateMessage(MessageCommand command, Uint8List payload) {
+  static Message? _generateMessage(
+    MessageCommand command, 
+    Uint8List payload
+  ) {
     switch (command) {
       case MessageCommand.version:
         return VersionMessage.deserialize(payload);
@@ -195,11 +200,19 @@ class MessageSerializer {
         return AddrMessage.deserialize(payload);
       case MessageCommand.headers:
         return HeadersMessage.deserialize(payload);
+      case MessageCommand.verack:
+        return VerackMessage();
+      case MessageCommand.ping:
+        return PingMessage.deserialize(payload);
+      case MessageCommand.pong:
+        return PingMessage.deserialize(payload);
       case MessageCommand.unknown:
-        _logger.i('Unknown message command received');
+        _logger.e('Unknown message command received');
         return null;
       default:
-        _logger.i('Unhandled message command: ${command.name}');
+        _logger.e(
+          'MessageSerializer error: Unhandled message command: ${command.name}'
+        );
         return null;
     }
   }

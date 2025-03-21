@@ -2,13 +2,28 @@ import 'dart:typed_data';
 import 'dart:math';
 import 'package:core/p2p/messaging/message.dart';
 import 'package:core/p2p/messaging/message_command.dart';
+/*
+The “ping” message helps confirm that the receiving peer is still connected. 
+If a TCP/IP error is encountered when sending the “ping” message (such as a connection timeout), the transmitting node can assume that the receiving node is disconnected. 
+The response to a “ping” message is the “pong” message.
 
+Structure of the message:
+  Nonce:                  8 bytes 
+*/
 class PingMessage implements Message {
-  final Uint8List nonce;
+  Uint8List nonce;
 
-  PingMessage({Uint8List? nonce}) : 
-    nonce = nonce ?? _generateRandomNonce();
+  PingMessage() : nonce = _generateRandomNonce();
+  
+  PingMessage._withNonce(this.nonce);
 
+  @override
+  MessageCommand get command => MessageCommand.ping;
+
+  @override
+  Uint8List payload() {
+    return nonce;
+  }
   static Uint8List _generateRandomNonce() {
     final random = Random.secure();
     final nonce = Uint8List(8);
@@ -18,18 +33,7 @@ class PingMessage implements Message {
     return nonce;
   }
 
-  @override
-  MessageCommand get command => MessageCommand.ping;
-
-  @override
-  Uint8List payload() {
-    return nonce;
-  }
-
   factory PingMessage.deserialize(Uint8List payload) {
-    if (payload.isEmpty) {
-      return PingMessage(nonce: Uint8List(0));
-    }
-    return PingMessage(nonce: payload);
+    return PingMessage._withNonce(payload);
   }
 }

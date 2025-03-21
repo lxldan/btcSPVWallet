@@ -4,6 +4,21 @@ import 'dart:typed_data';
 import 'dart:convert';
 import 'dart:math' as math;
 
+/*
+When a node creates an outgoing connection, it will immediately advertise its version. 
+The remote node will respond with its version. 
+No further communication is possible until both peers have exchanged their version.
+
+Structure of the message:
+  Version:                4 bytes - 31900 (version 0.3.19)
+  Services:               8 bytes - 1 (NODE_NETWORK services)
+  Timestamp:              8 bytes - Mon Dec 20 21:50:14 EST 2010
+  Recipient Address:     26 bytes - Network Address information
+  Sender Address:        26 bytes - Network Address information
+  Node Unique ID:         8 bytes - Random unique ID for the node
+  Sub-version String:     1 byte  - Empty string (0 bytes long)
+  Last Block Index:       4 bytes - Block #98645
+*/
 class VersionMessage implements Message {
   
   final int protocolVersion;
@@ -27,7 +42,8 @@ class VersionMessage implements Message {
     this.relay = true,
   });
 
-  /// Creates a new VersionMessage with randomly generated nonce and current timestamp
+  /// Creates a new VersionMessage with randomly 
+  /// generated nonce and current timestamp
   factory VersionMessage.create({
     required int protocolVersion,
     required int services,
@@ -178,12 +194,16 @@ class VersionMessage implements Message {
 
   @override
   String toString() {
-    return 'VersionMessage{protocolVersion: $protocolVersion, '
-           'services: $services, '
-           'timestamp: $timestamp, '
-           'userAgent: $userAgent, '
-           'lastBlock: $lastBlock, '
-           'nonce: $nonce, '
-           'relay: $relay}';
+    return '''
+      VersionMessage {
+        protocolVersion: $protocolVersion, '
+        'services: $services,'
+        'timestamp: $timestamp,'
+        'userAgent: $userAgent,'
+        'lastBlock: $lastBlock,'
+        'nonce: $nonce,'
+        'relay: $relay
+      }
+    ''';
   }
 }

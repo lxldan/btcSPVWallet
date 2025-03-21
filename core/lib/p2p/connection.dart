@@ -6,7 +6,7 @@ import 'package:core/p2p/messaging/message_serializer.dart';
 import 'package:core/p2p/messaging/messages/getheaders_message.dart';
 import 'package:core/p2p/messaging/messages/headers_message.dart';
 import 'package:core/p2p/messaging/messages/version_message.dart';
-import 'package:core/p2p/messaging/messages/vrack_message.dart';
+import 'package:core/p2p/messaging/messages/verack_message.dart';
 import 'package:core/p2p/messaging/messages/ping_message.dart';
 import 'package:core/p2p/messaging/messages/pong_message.dart';
 import 'package:logger/logger.dart';
@@ -32,7 +32,7 @@ class Connection {
   final String host;
   final int port;
 
-  static const int _protocolVersion = 70015;
+  static const int _protocolVersion = 60001;
 
   late final logger = Logger();
   late final MessageParser _parser = MessageParser();
@@ -42,7 +42,7 @@ class Connection {
   start() async {
     try {
       final versionMessage = VersionMessage(
-        protocolVersion: 70015,
+        protocolVersion: _protocolVersion,
         services: 0,
         timestamp: DateTime.now().millisecondsSinceEpoch ~/ 1000,
         userAgent: '/spv_wallet:0.1/',
@@ -97,30 +97,29 @@ class Connection {
             return;
           }
           _socket?.add(
-            MessageSerializer.serializeMessage(VrackMessage())
+            MessageSerializer.serializeMessage(VerackMessage())
           );
-          state = ConnectionState.connected;
-          _sendTestGetHeadersMessage();
-          break;
       
         case MessageCommand.verack:
           state = ConnectionState.connected;
-          break;
+          _sendTestGetHeadersMessage();
 
         case MessageCommand.ping:
           final pingMsg = message as PingMessage;
           final pongMsg = PongMessage(nonce: pingMsg.nonce);
           _socket?.add(MessageSerializer.serializeMessage(pongMsg));
-          break;
+
+        case MessageCommand.pong:
+          final pongMsg = message as PongMessage;
+          logger.i('Received pong message with nonce: ${pongMsg.nonce}');
 
         case MessageCommand.headers:
           final headers = message as HeadersMessage;
           logger.i('Received ${headers.headers.length} headers');
-          break;
+          logger.i('First header: ${headers.headers.first.toString()}');
 
         default:
           logger.i('Received message: $message');
-          break;
       }
     } catch (e, stackTrace) {
       logger.e(
