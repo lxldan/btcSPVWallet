@@ -11,7 +11,6 @@ Structure of the message:
   Version:                4 bytes
   Block Locator Hashes:   variable integer
   Hash Stop:              32 bytes
-
 */
 class GetHeadersMessage implements Message {
   

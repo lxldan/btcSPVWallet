@@ -3,16 +3,13 @@ import 'package:core/p2p/messaging/message_command.dart';
 import 'package:core/p2p/messaging/messages/adress.dart';
 import 'dart:typed_data';
 
-/*
-The addr (IP address) message relays connection information for peers on the network. Each peer which wants to accept incoming connections creates an “addr” or “addrv2” message providing its connection information and then sends that message to its peers unsolicited. 
-Some of its peers send that information to their peers (also unsolicited), some of which further distribute it, allowing decentralized peer discovery for any program already on the network.
-
-An “addr” message may also be sent in response to a “getaddr” message.
-
-Structure of the message:
-  Count:                  variable integer
-  Address:                variable length (30 bytes)
-*/
+/// The addr (IP address) message relays connection information for peers on the network. Each peer which wants to accept incoming connections creates an “addr” or “addrv2” message providing its connection information and then sends that message to its peers unsolicited. 
+/// Some of its peers send that information to their peers (also unsolicited), some of which further distribute it, allowing decentralized peer discovery for any program already on the network.
+/// An “addr” message may also be sent in response to a “getaddr” message.
+/// 
+/// Structure of the message:
+///  Count:                  variable integer
+///  Address:                variable length (30 bytes)
 
 class AddrMessage implements Message {
 
