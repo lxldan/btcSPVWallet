@@ -24,6 +24,55 @@ class GetHeadersMessage implements Message {
     required this.hashStop,
   });
 
+  /// Creates a GetHeadersMessage by deserializing a payload
+  factory GetHeadersMessage.deserialize(Uint8List payload) {
+    final data = ByteData.sublistView(payload);
+    var offset = 0;
+    
+    // Read version (4 bytes)
+    final version = data.getUint32(offset, Endian.little);
+    offset += 4;
+    
+    // Read number of hashes (variable length)
+    int count;
+    if (payload[offset] < 0xfd) {
+      count = payload[offset];
+      offset += 1;
+    } else if (payload[offset] == 0xfd) {
+      count = data.getUint16(offset + 1, Endian.little);
+      offset += 3;
+    } else if (payload[offset] == 0xfe) {
+      count = data.getUint32(offset + 1, Endian.little);
+      offset += 5;
+    } else {
+      // 0xff prefix - theoretically could be used but unlikely in practical applications
+      count = data.getUint64(offset + 1, Endian.little);
+      offset += 9;
+    }
+    
+    // Read block locator hashes
+    final blockLocatorHashes = <Uint8List>[];
+    for (var i = 0; i < count; i++) {
+      // The hashes are stored in reverse order in the payload, need to reverse back
+      final hash = Uint8List.fromList(
+        payload.sublist(offset, offset + 32).reversed.toList()
+      );
+      blockLocatorHashes.add(hash);
+      offset += 32;
+    }
+    
+    // Read hash stop (32 bytes)
+    final hashStop = Uint8List.fromList(
+      payload.sublist(offset, offset + 32).reversed.toList()
+    );
+    
+    return GetHeadersMessage(
+      version: version,
+      blockLocatorHashes: blockLocatorHashes, 
+      hashStop: hashStop,
+    );
+  }
+
   @override
   MessageCommand get command => MessageCommand.getheaders;
 
