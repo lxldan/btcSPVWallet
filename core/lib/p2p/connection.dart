@@ -1,4 +1,5 @@
-import 'package:core/blockchain/block_header.dart';
+import 'package:core/blockchain/blockchain.dart';
+import 'package:core/blockchain/blockchain_sync.dart';
 import 'package:core/p2p/messaging/message.dart';
 import 'package:core/p2p/messaging/message_command.dart';
 import 'package:core/p2p/messaging/message_parser.dart';
@@ -36,10 +37,17 @@ class Connection {
 
   late final logger = Logger();
   late final MessageParser _parser = MessageParser();
+  late final BlockchainSync blockchainSync;
 
   Connection({required this.host, required this.port});
 
   start() async {
+
+    blockchainSync = BlockchainSync(
+      lastBlock: await Blockchain.lastBlock()
+    );
+
+
     try {
       final versionMessage = VersionMessage(
         protocolVersion: _protocolVersion,
@@ -115,8 +123,14 @@ class Connection {
 
         case MessageCommand.headers:
           final headers = message as HeadersMessage;
-          logger.i('Received ${headers.headers.length} headers');
-          logger.i('First header: ${headers.headers.first.toString()}');
+          for (final header in headers.headers) {
+            try {
+              await blockchainSync.newBlock(header);
+            } catch (e) {
+              continue;
+            }
+          }
+          _sendTestGetHeadersMessage();
 
         default:
           logger.i('Received message: $message');
@@ -130,30 +144,16 @@ class Connection {
     }
   }
 
-  _sendTestGetHeadersMessage() {
-    Future.delayed(const Duration(seconds: 1), () {
-      final genesisBlockHeader = BlockHeader(
-        version: 1,
-        prevBlock: Uint8List(32),
-        merkleRoot: BlockHeader.fromHex(
-          '4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b'
-        ),
-        timestamp: 1231006505,
-        bits: 486604799,
-        nonce: 2083236893,
-      );
-
-      final message = GetHeadersMessage(
-        version: _protocolVersion,
-        blockLocatorHashes: [
-          genesisBlockHeader.computeBlockHashBytes()
-        ],
-        hashStop: Uint8List(32)
-      );
-
-      _socket?.add(
-        MessageSerializer.serializeMessage(message)
-      );
-    });
+  _sendTestGetHeadersMessage() async {
+    final message = GetHeadersMessage(
+      version: _protocolVersion,
+      hashStop: Uint8List(32),
+      blockLocatorHashes: [
+        blockchainSync.lastBlock.header.blockHash()
+      ]
+    );
+    _socket?.add(
+      MessageSerializer.serializeMessage(message)
+    );
   }
 }

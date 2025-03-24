@@ -9,14 +9,13 @@ The “getheaders” message is nearly identical to the “getblocks” message,
 
 Structure of the message:
   Version:                4 bytes
-  Block Locator Hashes:   variable integer
+  Block Locator Hashes:   variable integer (var_int) + list of 32-byte hashes
   Hash Stop:              32 bytes
 */
 class GetHeadersMessage implements Message {
-  
-  final int version;
-  final List<Uint8List> blockLocatorHashes;
-  final Uint8List hashStop;
+  final int version; // Версия протокола (4 байта)
+  final List<Uint8List> blockLocatorHashes; // Список хэшей для локализации (var_int + 32 байта на хэш)
+  final Uint8List hashStop; // Хэш блока, до которого нужно вернуть заголовки (32 байта)
 
   GetHeadersMessage({
     required this.version,
@@ -28,12 +27,12 @@ class GetHeadersMessage implements Message {
   factory GetHeadersMessage.deserialize(Uint8List payload) {
     final data = ByteData.sublistView(payload);
     var offset = 0;
-    
+
     // Read version (4 bytes)
     final version = data.getUint32(offset, Endian.little);
     offset += 4;
-    
-    // Read number of hashes (variable length)
+
+    // Read number of hashes (variable length var_int)
     int count;
     if (payload[offset] < 0xfd) {
       count = payload[offset];
@@ -49,26 +48,21 @@ class GetHeadersMessage implements Message {
       count = data.getUint64(offset + 1, Endian.little);
       offset += 9;
     }
-    
-    // Read block locator hashes
+
+    // Read block locator hashes (each 32 bytes)
     final blockLocatorHashes = <Uint8List>[];
     for (var i = 0; i < count; i++) {
-      // The hashes are stored in reverse order in the payload, need to reverse back
-      final hash = Uint8List.fromList(
-        payload.sublist(offset, offset + 32).reversed.toList()
-      );
+      final hash = Uint8List.fromList(payload.sublist(offset, offset + 32)); // Без .reversed
       blockLocatorHashes.add(hash);
       offset += 32;
     }
-    
+
     // Read hash stop (32 bytes)
-    final hashStop = Uint8List.fromList(
-      payload.sublist(offset, offset + 32).reversed.toList()
-    );
-    
+    final hashStop = Uint8List.fromList(payload.sublist(offset, offset + 32)); // Без .reversed
+
     return GetHeadersMessage(
       version: version,
-      blockLocatorHashes: blockLocatorHashes, 
+      blockLocatorHashes: blockLocatorHashes,
       hashStop: hashStop,
     );
   }
@@ -78,14 +72,15 @@ class GetHeadersMessage implements Message {
 
   @override
   Uint8List payload() {
-    final buffer = ByteData(
-      4 + 9 + (32 * blockLocatorHashes.length) + 32
-    );
+    // Выделяем буфер с запасом для максимального размера var_int (9 байт)
+    final buffer = ByteData(4 + 9 + (32 * blockLocatorHashes.length) + 32);
     var offset = 0;
 
+    // Write version (4 bytes)
     buffer.setUint32(offset, version, Endian.little);
     offset += 4;
 
+    // Write number of hashes (var_int)
     final count = blockLocatorHashes.length;
     if (count < 0xfd) {
       buffer.setUint8(offset, count);
@@ -104,14 +99,17 @@ class GetHeadersMessage implements Message {
       offset += 9;
     }
 
+    // Write block locator hashes (each 32 bytes)
     for (var hash in blockLocatorHashes) {
-      buffer.buffer.asUint8List(offset, 32).setAll(0, hash.reversed);
+      buffer.buffer.asUint8List(offset, 32).setAll(0, hash); // Без .reversed
       offset += 32;
     }
 
-    buffer.buffer.asUint8List(offset, 32).setAll(0, hashStop.reversed);
+    // Write hash stop (32 bytes)
+    buffer.buffer.asUint8List(offset, 32).setAll(0, hashStop); // Без .reversed
     offset += 32;
 
+    // Возвращаем только использованную часть буфера
     return buffer.buffer.asUint8List(0, offset);
   }
 }

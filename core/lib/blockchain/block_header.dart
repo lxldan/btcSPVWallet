@@ -19,6 +19,7 @@ class BlockHeader {
     required this.nonce,
   });
 
+  /// Deserializes a block header from binary data from p2p
   factory BlockHeader.deserialize(ByteData data, int offset) {
     if (data.lengthInBytes - offset < 80) {
       throw Exception('Invalid header length');
@@ -44,45 +45,10 @@ class BlockHeader {
     return buffer.buffer.asUint8List();
   }
 
-  String toHex(Uint8List bytes) {
-    return bytes.reversed.map((b) => b.toRadixString(16).padLeft(
-      2, 
-      '0'
-    )).join();
-  }
-
-  static Uint8List fromHex(String hex) {
-    final length = hex.length ~/ 2;
-    final result = Uint8List(length);
-    for (int i = 0; i < length; i++) {
-      result[length - 1 - i] = int.parse(hex.substring(i * 2, i * 2 + 2), radix: 16);
-    }
-    return result;
-  }
-
-  Uint8List computeBlockHashBytes() {
+  Uint8List blockHash() {
     final headerData = serialize();
     final firstHash = sha256.convert(headerData);
     final secondHash = sha256.convert(firstHash.bytes);
     return Uint8List.fromList(secondHash.bytes);
-  }
-
-  String computeBlockHash() {
-    return toHex(computeBlockHashBytes());
-  }
-
-  Map<String, dynamic> toMap(int height, Uint8List chainwork) {
-    final blockHash = computeBlockHash();
-    return {
-      'block_hash': blockHash,
-      'version': version,
-      'prev_block_hash': toHex(prevBlock),
-      'merkle_root': toHex(merkleRoot),
-      'timestamp': timestamp,
-      'bits': bits,
-      'nonce': nonce,
-      'height': height,
-      'chainwork': toHex(chainwork),
-    };
   }
 }
