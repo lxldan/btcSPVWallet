@@ -1,4 +1,5 @@
 import 'package:sqflite/sqflite.dart';
+import 'dart:typed_data';
 
 class BlockchainDBKeys {
   static const database = 'blockchain.db';
@@ -8,10 +9,12 @@ class BlockchainDBKeys {
 
 class BlockchainDB {
 
-  static const Map<String, dynamic> genesisBlock = {
+  static Map<String, dynamic> genesisBlock = {
     'version': '1', 
-    'prev_block_hash': '0000000000000000000000000000000000000000000000000000000000000000',
-    'merkle_root': '4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b',
+    'prev_block_hash': Uint8List(32),
+    'merkle_root': Uint8List.fromList([
+      59, 163, 237, 253, 122, 123, 18, 178, 122, 199, 44, 62, 103, 118, 143, 97, 127, 200, 27, 195, 136, 138, 81, 50, 58, 159, 184, 170, 75, 30, 94, 74
+    ]),
     'timestamp': 1231006505,
     'bits': 486604799,
     'nonce': 2083236893,
@@ -35,10 +38,10 @@ class BlockchainDB {
       onCreate: (Database db, int version) async {
         await db.execute('''
           CREATE TABLE blocks (
-            height INTEGER,
+            height INTEGER PRIMARY KEY,
             version INTEGER,
-            prev_block_hash TEXT,
-            merkle_root TEXT,
+            prev_block_hash BLOB,
+            merkle_root BLOB,
             timestamp INTEGER,
             bits INTEGER,
             nonce INTEGER

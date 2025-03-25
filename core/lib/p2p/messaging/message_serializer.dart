@@ -207,12 +207,12 @@ class MessageSerializer {
       case MessageCommand.pong:
         return PingMessage.deserialize(payload);
       case MessageCommand.unknown:
-        _logger.e('Unknown message command received');
+        // _logger.e('Unknown message command received');
         return null;
       default:
-        _logger.e(
-          'MessageSerializer error: Unhandled message command: ${command.name}'
-        );
+        // _logger.e(
+        //   'MessageSerializer error: Unhandled message command: ${command.name}'
+        // );
         return null;
     }
   }

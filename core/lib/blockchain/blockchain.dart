@@ -4,7 +4,6 @@ import 'package:core/blockchain/mapper.dart';
 
 class Blockchain {
 
-
   static Future<Block> lastBlock() async {
     final lastBlockMap = await BlockchainDB.lastBlock();
     final block = Mapper.blockFromMap(lastBlockMap);

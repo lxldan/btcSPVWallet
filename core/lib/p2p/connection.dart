@@ -33,6 +33,8 @@ class Connection {
   final String host;
   final int port;
 
+  late final Stopwatch syncTimer;
+
   static const int _protocolVersion = 60001;
 
   late final logger = Logger();
@@ -47,6 +49,7 @@ class Connection {
       lastBlock: await Blockchain.lastBlock()
     );
 
+    syncTimer = Stopwatch()..start();
 
     try {
       final versionMessage = VersionMessage(
@@ -95,6 +98,8 @@ class Connection {
     }
   }
 
+
+
   _handleIncomingMessage(Message message) async {
     try {
       switch (message.command) {
@@ -123,6 +128,15 @@ class Connection {
 
         case MessageCommand.headers:
           final headers = message as HeadersMessage;
+          if (headers.headers.isEmpty) {
+            await blockchainSync.writeBufferToDB();
+            syncTimer.stop();
+            logger.i(
+              'Sync completed in ${syncTimer.elapsedMilliseconds / 1000}s'
+            );
+            syncTimer.stop();
+            return;
+          }
           for (final header in headers.headers) {
             try {
               await blockchainSync.newBlock(header);

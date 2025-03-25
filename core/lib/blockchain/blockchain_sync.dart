@@ -15,14 +15,15 @@ class BlockchainSync {
   BlockchainSync({
     required this.lastBlock
   });
-  
+
   newBlock(BlockHeader header) async {
-    if (buffer.length == 50000) await _writeBufferToDB();
-    
+    if (buffer.length == 50000) await writeBufferToDB();
+
     final previousHash = lastBlock.header.blockHash();
+
     if (!listEqualityChecker.equals(previousHash, header.prevBlock)) {
       throw Exception(
-        'Invalid block: previous block hash does not match'
+        'BlockchainSync Error: previous block hash does not match'
       );
     }
 
@@ -34,16 +35,11 @@ class BlockchainSync {
 
     buffer.add(newBlock);
     lastBlock = newBlock;
-
-    print('New best height $newHeight');
   }
 
-  Future _writeBufferToDB() async {
-    final blockMaps = buffer.map(
-      (block) => Mapper.blockToMap(block)
-    ).toList();
-    await BlockchainDB.insertBlocks(blockMaps);
+  Future writeBufferToDB() async {
+    final maps = buffer.map((block) => Mapper.blockToMap(block)).toList();
     buffer.clear();
+    BlockchainDB.insertBlocks(maps);
   }
-
 }

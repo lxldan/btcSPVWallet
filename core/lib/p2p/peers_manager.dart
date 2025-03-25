@@ -8,7 +8,7 @@ class PeersManager {
   late final log = Logger();
   
   start() async {
-    await _connect('localhost', 8333);
+    await _connect('seed.bitcoin.sipa.be', 8333);
   }
 
   Future _connect(String host, int port) async {

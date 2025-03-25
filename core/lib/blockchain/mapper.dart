@@ -1,6 +1,5 @@
 import 'package:core/blockchain/block.dart';
 import 'package:core/blockchain/block_header.dart';
-import 'package:core/extensions.dart';
 
 class MapperKey {
   static const blockHash = 'block_hash';
@@ -27,8 +26,8 @@ class Mapper {
   static BlockHeader headerFromMap(Map<String, dynamic> map) {
     return BlockHeader(
       version: map[MapperKey.version],
-      prevBlock: fromHex(map[MapperKey.prevBlockHash]),
-      merkleRoot: fromHex(map[MapperKey.merkleRoot]),
+      prevBlock: map[MapperKey.prevBlockHash],
+      merkleRoot: map[MapperKey.merkleRoot],
       timestamp: map[MapperKey.timestamp],
       bits: map[MapperKey.bits],
       nonce: map[MapperKey.nonce]
@@ -37,10 +36,9 @@ class Mapper {
 
   static Map<String, dynamic> blockHeaderToMap(BlockHeader header) {
     return {
-      // MapperKey.blockHash: toHex(header.blockHash()),
       MapperKey.version: header.version,
-      MapperKey.prevBlockHash: toHex(header.prevBlock),
-      MapperKey.merkleRoot: toHex(header.merkleRoot),
+      MapperKey.prevBlockHash: header.prevBlock,
+      MapperKey.merkleRoot: header.merkleRoot,
       MapperKey.timestamp: header.timestamp,
       MapperKey.bits: header.bits,
       MapperKey.nonce: header.nonce
