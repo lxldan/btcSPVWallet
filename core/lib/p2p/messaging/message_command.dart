@@ -51,5 +51,7 @@ enum MessageCommand {
   alert,
   sendheaders,
   feefilter,
+  getcfilters,
+  cfilter,
   unknown
 }

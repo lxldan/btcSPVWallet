@@ -4,7 +4,7 @@ import 'package:core/blockchain/block_header.dart';
 class MapperKey {
   static const blockHash = 'block_hash';
   static const version = 'version';
-  static const prevBlockHash = 'prev_block_hash';
+  static const prevBlockHash = 'prev_block';
   static const merkleRoot = 'merkle_root';
   static const timestamp = 'timestamp';
   static const bits = 'bits';
@@ -30,7 +30,7 @@ class Mapper {
       merkleRoot: map[MapperKey.merkleRoot],
       timestamp: map[MapperKey.timestamp],
       bits: map[MapperKey.bits],
-      nonce: map[MapperKey.nonce]
+      nonce: map[MapperKey.nonce],
     );
   }
 

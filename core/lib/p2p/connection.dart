@@ -1,15 +1,19 @@
 import 'package:core/blockchain/blockchain.dart';
 import 'package:core/blockchain/blockchain_sync.dart';
+import 'package:core/extensions.dart';
 import 'package:core/p2p/messaging/message.dart';
 import 'package:core/p2p/messaging/message_command.dart';
 import 'package:core/p2p/messaging/message_parser.dart';
 import 'package:core/p2p/messaging/message_serializer.dart';
+import 'package:core/p2p/messaging/messages/cfilter_message.dart';
+import 'package:core/p2p/messaging/messages/getcfilters_message.dart';
 import 'package:core/p2p/messaging/messages/getheaders_message.dart';
 import 'package:core/p2p/messaging/messages/headers_message.dart';
 import 'package:core/p2p/messaging/messages/version_message.dart';
 import 'package:core/p2p/messaging/messages/verack_message.dart';
 import 'package:core/p2p/messaging/messages/ping_message.dart';
 import 'package:core/p2p/messaging/messages/pong_message.dart';
+import 'package:core/p2p/messaging/services.dart';
 import 'package:logger/logger.dart';
 import 'dart:typed_data';
 import 'dart:io';
@@ -35,7 +39,7 @@ class Connection {
 
   late final Stopwatch syncTimer;
 
-  static const int _protocolVersion = 60001;
+  static const int _protocolVersion = 70016;
 
   late final logger = Logger();
   late final MessageParser _parser = MessageParser();
@@ -52,19 +56,10 @@ class Connection {
     syncTimer = Stopwatch()..start();
 
     try {
-      final versionMessage = VersionMessage(
-        protocolVersion: _protocolVersion,
-        services: 0,
-        timestamp: DateTime.now().millisecondsSinceEpoch ~/ 1000,
-        userAgent: '/spv_wallet:0.1/',
-        lastBlock: 0,
-        nonce: DateTime.now().microsecondsSinceEpoch
-      );
- 
+  
       _socket = await Socket.connect(host, port);
-      _socket?.add(
-        MessageSerializer.serializeMessage(versionMessage)
-      );
+
+      _sendVersionMessage();
 
       _socket?.listen((Uint8List data) {
         _processSocketData(data);
@@ -97,8 +92,6 @@ class Connection {
       _handleIncomingMessage(message);
     }
   }
-
-
 
   _handleIncomingMessage(Message message) async {
     try {
@@ -135,6 +128,8 @@ class Connection {
               'Sync completed in ${syncTimer.elapsedMilliseconds / 1000}s'
             );
             syncTimer.stop();
+            _sendGetCFilters();
+
             return;
           }
           for (final header in headers.headers) {
@@ -146,6 +141,11 @@ class Connection {
           }
           _sendTestGetHeadersMessage();
 
+
+        case MessageCommand.cfilter:
+          final cfilterMsg = message as CFilterMessage;
+          logger.i('Received cfilter message for block: ${cfilterMsg.blockHash}');
+
         default:
           logger.i('Received message: $message');
       }
@@ -156,6 +156,42 @@ class Connection {
         stackTrace: stackTrace
       );
     }
+  }
+
+  _sendVersionMessage() {
+
+    final message = VersionMessage(
+      protocolVersion: _protocolVersion,
+      services: Services.nodeCompactFilters,
+      timestamp: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+      userAgent: 'spvWallet',
+      lastBlock: blockchainSync.lastBlock.height,
+      nonce: 0
+    );
+
+    final messageBytes = MessageSerializer.serializeMessage(message);
+    
+    print('Version message bytes: ${uint8ListToHex(messageBytes)}');
+
+    _socket?.add(messageBytes);
+  }
+
+  // ignore: unused_element
+  _sendGetCFilters() async {
+ 
+
+    final getCFiltersMsg = GetCFiltersMessage(
+      startHeight: 500000,
+      stopHash: blockchainSync.lastBlock.header.blockHash()
+    );
+  
+
+  final serializedGetCFilters = getCFiltersMsg.serialize();
+    
+    print('getcfilters message: ${uint8ListToHex(serializedGetCFilters)}');
+    _socket?.add(
+      serializedGetCFilters
+    );
   }
 
   _sendTestGetHeadersMessage() async {

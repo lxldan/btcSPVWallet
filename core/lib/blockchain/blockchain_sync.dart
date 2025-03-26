@@ -18,21 +18,16 @@ class BlockchainSync {
 
   newBlock(BlockHeader header) async {
     if (buffer.length == 50000) await writeBufferToDB();
-
     final previousHash = lastBlock.header.blockHash();
-
     if (!listEqualityChecker.equals(previousHash, header.prevBlock)) {
       throw Exception(
         'BlockchainSync Error: previous block hash does not match'
       );
     }
-
-    final newHeight = lastBlock.height + 1;
     final newBlock = Block(
       header: header, 
-      height: newHeight
+      height: lastBlock.height + 1
     );
-
     buffer.add(newBlock);
     lastBlock = newBlock;
   }

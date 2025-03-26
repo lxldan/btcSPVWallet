@@ -1,5 +1,5 @@
 import 'package:core/p2p/messaging/message.dart';
-import 'package:core/p2p/messaging/message_serializer.dart';
+import 'package:core/p2p/messaging/message_deserializer.dart';
 import 'dart:typed_data';
 
 class MessageParser {
@@ -19,7 +19,7 @@ class MessageParser {
     return messages;
   }
 
-  void _tryParseMessages() {
+  _tryParseMessages() {
     var bufferBytes = _buffer.toBytes();
 
     while (bufferBytes.length >= 24) {
@@ -48,7 +48,7 @@ class MessageParser {
       _buffer.add(bufferBytes);
 
       try {
-        final message = MessageSerializer.deserializeMessage(messageBytes);
+        final message = MessageDeserializer.deserializeMessage(messageBytes);
         if (message != null) {
           _parsedMessages.add(message);
           print("Parsed message: ${message.command}");

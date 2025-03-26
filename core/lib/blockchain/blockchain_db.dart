@@ -11,7 +11,7 @@ class BlockchainDB {
 
   static Map<String, dynamic> genesisBlock = {
     'version': '1', 
-    'prev_block_hash': Uint8List(32),
+    'prev_block': Uint8List(32),
     'merkle_root': Uint8List.fromList([
       59, 163, 237, 253, 122, 123, 18, 178, 122, 199, 44, 62, 103, 118, 143, 97, 127, 200, 27, 195, 136, 138, 81, 50, 58, 159, 184, 170, 75, 30, 94, 74
     ]),
@@ -39,12 +39,12 @@ class BlockchainDB {
         await db.execute('''
           CREATE TABLE blocks (
             height INTEGER PRIMARY KEY,
-            version INTEGER,
-            prev_block_hash BLOB,
-            merkle_root BLOB,
             timestamp INTEGER,
+            version INTEGER,
             bits INTEGER,
-            nonce INTEGER
+            nonce INTEGER,
+            prev_block BLOB,
+            merkle_root BLOB
           )'''
         );
         await db.insert(
@@ -52,15 +52,6 @@ class BlockchainDB {
           genesisBlock
         );
       }
-    );
-  }
-
-  static Future insertBlock(Map<String, dynamic> map) async {
-    final db = await openDatabase(BlockchainDBKeys.database);
-    await db.insert(
-      BlockchainDBKeys.blocks,
-      map,
-      conflictAlgorithm: ConflictAlgorithm.ignore
     );
   }
 
