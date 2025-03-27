@@ -1,5 +1,7 @@
 import 'dart:typed_data';
 
+import 'package:crypto/crypto.dart';
+
 String toHex(Uint8List bytes) {
   return bytes.map((b) => b.toRadixString(16).padLeft(
     2, 
@@ -51,4 +53,13 @@ String uint8ListToHex(
   }
   
   return buffer.toString();
+}
+
+/// Calculates the checksum for a payload.
+/// 
+/// The checksum is the first 4 bytes of a double SHA256 hash.
+Uint8List calculateChecksum(Uint8List payload) {
+  final hash1 = sha256.convert(payload).bytes;
+  final hash2 = sha256.convert(hash1).bytes;
+  return Uint8List.fromList(hash2.sublist(0, 4));
 }

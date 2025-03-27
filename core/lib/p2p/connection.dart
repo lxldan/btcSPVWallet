@@ -6,7 +6,6 @@ import 'package:core/p2p/messaging/message_command.dart';
 import 'package:core/p2p/messaging/message_parser.dart';
 import 'package:core/p2p/messaging/message_serializer.dart';
 import 'package:core/p2p/messaging/messages/cfilter_message.dart';
-import 'package:core/p2p/messaging/messages/getcfilters_message.dart';
 import 'package:core/p2p/messaging/messages/getheaders_message.dart';
 import 'package:core/p2p/messaging/messages/headers_message.dart';
 import 'package:core/p2p/messaging/messages/version_message.dart';
@@ -178,20 +177,7 @@ class Connection {
 
   // ignore: unused_element
   _sendGetCFilters() async {
- 
 
-    final getCFiltersMsg = GetCFiltersMessage(
-      startHeight: 500000,
-      stopHash: blockchainSync.lastBlock.header.blockHash()
-    );
-  
-
-  final serializedGetCFilters = getCFiltersMsg.serialize();
-    
-    print('getcfilters message: ${uint8ListToHex(serializedGetCFilters)}');
-    _socket?.add(
-      serializedGetCFilters
-    );
   }
 
   _sendTestGetHeadersMessage() async {
